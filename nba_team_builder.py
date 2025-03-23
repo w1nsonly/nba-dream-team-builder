@@ -1,38 +1,50 @@
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import pandas as pd
+import numpy as np
 
 app = Flask(__name__)
+CORS(app)
 
 # Load CSV into a datafram
 data = pd.read_csv("nba_2016_2017_stats.csv")
 
+@app.route('/')
+def index():
+    return "Welcome to the NBA Dream Team API!"
+
+
 # Route to filter players by positions
+@app.route('/positions')
+def get_positions():
+    positions = [
+        "PG", "SG", "SF", "PF", "C"
+    ]
+    return jsonify(positions)
+
 @app.route('/players/position', methods=['GET'])
 def filter_by_position():
-    position = request.args.get('pos')
+    pos = request.args.get('pos')
+    filtered = data[data['Pos'] == pos] if pos else data
+    return jsonify(filtered.replace({np.nan: None}).to_dict(orient='records'))
 
-    if position:
-        filtered_data = data[data['Pos'] == position]
-        if filtered_data.empty:
-            return jsonify({"error": "No players found for this position"}), 404
-        return jsonify(filtered_data.to_dict(orient='records'))
-    
-    # If no position is provided, return all players
-    return jsonify(data.to_dict(orient='records'))
+
 
 # Route to filter players by team (ex: GSW, OKC)
+@app.route('/teams')
+def get_teams():
+    teams = [
+        "ATL", "BOS", "BRK", "CHI", "CHO", "CLE", "DAL", "DEN", "DET", "GSW",
+        "HOU", "IND", "LAC", "LAL", "MEM", "MIA", "MIL", "MIN", "NOP", "NYK",
+        "OKC", "ORL", "PHI", "PHO", "POR", "SAC", "SAS", "TOR", "UTA", "WAS"
+    ]
+    return jsonify(teams)
+
 @app.route('/players/team', methods=['GET'])
 def filter_by_team():
     team = request.args.get('team')
-
-    if team:
-        filtered_data = data[data['Team'] == team]
-        if filtered_data.empty:
-            return jsonify({"error": "No players found for this team"}), 404
-        return jsonify(filtered_data.to_dict(orient='records'))
-    
-    # If no position is provided, return all players
-    return jsonify(data.to_dict(orient='records'))
+    filtered = data[data['Team'] == team] if team else data
+    return jsonify(filtered.replace({np.nan: None}).to_dict(orient='records'))
 
 # Route to filter players by age
 @app.route('/players/age', methods=['GET'])
@@ -55,6 +67,7 @@ def filter_by_age():
     # Return the filtered data as JSON
     return jsonify(filtered_data.to_dict(orient='records'))
     
+
 # Route to filter players by stats
 @app.route('/players/top', methods=['GET'])
 def get_top_players():
@@ -74,8 +87,13 @@ def get_top_players():
     # Return the top players
     return jsonify(top_players.to_dict(orient='records'))
 
+
+
 if __name__ == '__main__':
     app.run(debug=True)
+    
+
+
 
     
 
