@@ -22,14 +22,6 @@ def get_positions():
     ]
     return jsonify(positions)
 
-@app.route('/players/position', methods=['GET'])
-def filter_by_position():
-    pos = request.args.get('pos')
-    filtered = data[data['Pos'] == pos] if pos else data
-    return jsonify(filtered.replace({np.nan: None}).to_dict(orient='records'))
-
-
-
 # Route to filter players by team (ex: GSW, OKC)
 @app.route('/teams')
 def get_teams():
@@ -40,52 +32,32 @@ def get_teams():
     ]
     return jsonify(teams)
 
-@app.route('/players/team', methods=['GET'])
-def filter_by_team():
+@app.route('/players', methods=['GET'])
+def get_players():
     team = request.args.get('team')
-    filtered = data[data['Team'] == team] if team else data
-    return jsonify(filtered.replace({np.nan: None}).to_dict(orient='records'))
+    pos = request.args.get('pos')
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
 
-# Route to filter players by age
-@app.route('/players/age', methods=['GET'])
-def filter_by_age():
-    min_age = request.args.get('min_age', type=int) # putting min_age as an int
-    max_age = request.args.get('max_age', type=int) # putting max_age as an int
+    # Start with the full dataset
+    filtered_data = data
 
-    # Validate input: Ensure at least one parameter is provided
-    if min_age is None and max_age is None:
-        return jsonify({"error": "Provide at least 'min_age' or 'max_age' parameters"}), 400
-    
-    if min_age is not None and max_age is not None:
-        filtered_data = data[(data['Age'] >= min_age) & (data['Age'] <= max_age)]
-    elif min_age is not None:
-        filtered_data = data[data['Age'] >= min_age]
-    elif max_age is not None:
-        filtered_data = data[data['Age'] <= max_age]
+    # Filter by team if provided
+    if team:
+        filtered_data = filtered_data[filtered_data['Team'] == team]
 
+    # Filter by position if provided
+    if pos:
+        filtered_data = filtered_data[filtered_data['Pos'] == pos]
 
-    # Return the filtered data as JSON
-    return jsonify(filtered_data.to_dict(orient='records'))
-    
+    # Filter by age if provided
+    if min_age is not None:
+        filtered_data = filtered_data[filtered_data['Age'] >= min_age]
+    if max_age is not None:
+        filtered_data = filtered_data[filtered_data['Age'] <= max_age]
 
-# Route to filter players by stats
-@app.route('/players/top', methods=['GET'])
-def get_top_players():
-    stat = request.args.get('stat') # stats to sort are PTS, TRB, and AST
-    top_n = request.args.get('top_n', default=10, type=int) # Number of players to return
-
-    # Validate the stat parameter
-    if stat not in ['PTS', 'TRB', 'AST']:
-        return jsonify({"error": "Invalid stat. Use 'PTS', 'TRB', or 'AST'."}), 400
-    
-    # Sort the data by the specified stat in descending order
-    sorted_data = data.sort_values(by=stat, ascending=False)
-
-    # Select the top N players
-    top_players = sorted_data.head(top_n)
-
-    # Return the top players
-    return jsonify(top_players.to_dict(orient='records'))
+    # Convert to JSON
+    return jsonify(filtered_data.replace({np.nan: None}).to_dict(orient='records'))
 
 
 

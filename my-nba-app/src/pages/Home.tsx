@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
-import { Filter } from "../filters/Filter";
+import { Filters } from "../filters/Filters";
 
 const HomeMain = styled.main`
 `;
@@ -16,7 +16,8 @@ export function Home() {
         <>
             <Header />
             <HomeMain>
-                <Filter />
+                <h3>Filters</h3>
+                <Filters />
             </HomeMain>
             <Footer />
         </>

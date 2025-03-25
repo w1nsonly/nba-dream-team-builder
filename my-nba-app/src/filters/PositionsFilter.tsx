@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Player } from "../interfaces/Player";
 
-export function PositionFilter() {
+interface PositionFilterProps {
+    selectedPosition: string;
+    onPositionChange: (pos: string) => void;
+}
+
+export function PositionFilter({selectedPosition, onPositionChange}: PositionFilterProps) {
     const [positions, setPositions] = useState<String[]>([]);
-    const [selectedPosition, setSelectedPosition] = useState<string>("");
-    const [players, setPlayers] = useState<Player[]>([]);
 
     useEffect(() => {
         axios.get("http://127.0.0.1:5000/positions")
@@ -15,19 +17,6 @@ export function PositionFilter() {
             .catch((error) => console.error("Error fetching positions:", error));
     }, []);
 
-    useEffect(() => {
-        if (selectedPosition !== "") {
-            axios.get(`http://127.0.0.1:5000/players/position?pos=${selectedPosition}`)
-                .then((response) => {
-                    console.log("Raw response:", response.data);
-                    console.log(typeof(response.data))
-                    setPlayers(response.data);
-                })
-                .catch((error) => console.error("Error fetching players:", error));
-        } else {
-            setPlayers([]); // Clear players if no team selected
-        }
-    }, [selectedPosition]);
 
     return (
         <div>
@@ -35,7 +24,7 @@ export function PositionFilter() {
             <select
                 id="position-dropdown"
                 value={selectedPosition}
-                onChange={(e) => setSelectedPosition(e.target.value)}
+                onChange={(e) => onPositionChange(e.target.value)}
             >
                 <option value="">-- Select a Team --</option>
                 {positions.map((position) => (
@@ -44,22 +33,6 @@ export function PositionFilter() {
                     </option>
                 ))}
             </select>
-
-            {players.length > 0 && (
-                <div>
-                    <h3>Players on {selectedPosition}</h3>
-                    <ul>
-                    {players.map((player, index) => (
-                        <li key={index}>
-                        <strong>{player.Player}</strong> {player.Team} - Age: {player.Age}, PTS: {player.PTS}, AST: {player.AST}, REB: {player.TRB}
-                        </li>
-                    ))}
-                    </ul>
-                </div>
-            )}
-
-        </div>
-
-        
+        </div> 
     );
 }
